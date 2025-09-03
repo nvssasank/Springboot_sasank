@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: springboot-hello
-  namespace: srilatha-namespace
+  namespace: sasank-namespace
   labels:
     app: springboot-hello
 spec:
