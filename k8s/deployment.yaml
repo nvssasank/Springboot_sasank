@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: springboot-hello
+  namespace: srilatha-namespace
+  labels:
+    app: springboot-hello
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: springboot-hello
+  template:
+    metadata:
+      labels:
+        app: springboot-hello
+    spec:
+      containers:
+      - name: springboot-app-hello
+        image: <IMAGE_PLACEHOLDER>
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SERVER_PORT
+          value: "8080"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5

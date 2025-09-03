@@ -1,0 +1,67 @@
+pipeline {
+    agent any
+    environment {
+        AWS_REGION = "eu-west-2"
+        EKS_CLUSTER = "batch4-Team3-cluster"
+        DOCKER_IMAGE = "sri642/springboot-app-hello:${BUILD_NUMBER}"
+        DOCKER_HUB_CREDS = "Docker_token"
+        KUBE_NAMESPACE = "srilatha-namespace"
+    }
+    tools {
+        maven 'maven3'
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                git credentialsId: 'Github_token', url: 'https://github.com/20NN1A05F0/SpringBoot_Application.git', branch: 'main'
+            }
+        }
+        stage('Build with Maven') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t $DOCKER_IMAGE .'
+            }
+        }
+        stage('Push to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_CREDS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                    sh 'docker push $DOCKER_IMAGE'
+                }
+            }
+        }
+        stage('Update kubeconfig') {
+            steps {
+                withCredentials([
+                    string(credentialsId: 'aws-access-key-id', variable: 'AWS_ACCESS_KEY_ID'),
+                    string(credentialsId: 'aws-secret-access-key', variable: 'AWS_SECRET_ACCESS_KEY')
+                ]) {
+                    sh '''
+                        aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+                        aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+                        aws configure set default.region $AWS_REGION
+                        aws eks --region $AWS_REGION update-kubeconfig --name $EKS_CLUSTER
+                    '''
+                }
+            }
+        }
+        stage('Deploy to EKS') {
+            steps {
+                sh '''
+                    sed -i "s@<IMAGE_PLACEHOLDER>@$DOCKER_IMAGE@g" k8s/deployment.yaml
+                    kubectl apply -f k8s/namespace.yaml
+                    kubectl apply -n srilatha-namespace -f k8s/deployment.yaml
+                '''
+            }
+        }
+        stage('Deploy Ingress') {
+            steps {
+                sh 'kubectl apply -n srilatha-namespace -f k8s/ingress.yaml'
+            }
+        }
+    }
+}
