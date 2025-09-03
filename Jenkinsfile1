@@ -54,13 +54,13 @@ pipeline {
                 sh '''
                     sed -i "s@<IMAGE_PLACEHOLDER>@$DOCKER_IMAGE@g" k8s/deployment.yaml
                     kubectl apply -f k8s/namespace.yaml
-                    kubectl apply -n srilatha-namespace -f k8s/deployment.yaml
+                    kubectl apply -n sasank-namespace -f k8s/deployment.yaml
                 '''
             }
         }
         stage('Deploy Ingress') {
             steps {
-                sh 'kubectl apply -n srilatha-namespace -f k8s/ingress.yaml'
+                sh 'kubectl apply -n sasank-namespace -f k8s/ingress.yaml'
             }
         }
     }
