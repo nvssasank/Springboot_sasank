@@ -3,9 +3,9 @@ pipeline {
     environment {
         AWS_REGION = "eu-west-2"
         EKS_CLUSTER = "batch4-Team3-cluster"
-        DOCKER_IMAGE = "sri642/springboot-app-hello:${BUILD_NUMBER}"
-        DOCKER_HUB_CREDS = "Docker_token"
-        KUBE_NAMESPACE = "srilatha-namespace"
+        DOCKER_IMAGE = "sasank1219/springboot-app-hello:${BUILD_NUMBER}"
+        DOCKER_HUB_CREDS = "docker-sasank"
+        KUBE_NAMESPACE = "sasank-namespace"
     }
     tools {
         maven 'maven3'
@@ -13,7 +13,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git credentialsId: 'Github_token', url: 'https://github.com/20NN1A05F0/SpringBoot_Application.git', branch: 'main'
+                git credentialsId: 'Github_token', url: 'https://github.com/nvssasank/Springboot_sasank.git', branch: 'main'
             }
         }
         stage('Build with Maven') {
