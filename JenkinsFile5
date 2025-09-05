@@ -12,12 +12,12 @@ pipeline {
     environment {
         AWS_REGION = "eu-west-2"
         EKS_CLUSTER = "batch4-Team3-cluster"
-        DOCKER_IMAGE = "sunil8179/springboot-app:v${BUILD_NUMBER}"
-        DOCKER_CREDENTIALS_ID = "docker-sunil"
+        DOCKER_IMAGE = "sasank1219/springboot-hello:v${BUILD_NUMBER}"
+        DOCKER_CREDENTIALS_ID = "sasank-docker"
         AWS_ACCESS_KEY_ID_CRED = "aws-access-key-id"
         AWS_SECRET_ACCESS_KEY_CRED = "aws-secret-access-key"
-        NAMESPACE = "sunil"
-        HELM_RELEASE_NAME = "springboot-app"
+        NAMESPACE = "sasank"
+        HELM_RELEASE_NAME = "springboot-hello"
         HELM_CHART_PATH = "./helm-chart"
     }
 
@@ -25,8 +25,8 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main',
-                    credentialsId: 'sunil_git-cred',
-                    url: 'https://github.com/gsunil81/Spring-boot-hello-world-app.git'
+                    credentialsId: 'git-sasank',
+                    url: 'https://github.com/nvssasank/Springboot_sasank.git'
             }
         }
 
