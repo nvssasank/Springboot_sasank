@@ -1,97 +1,58 @@
 pipeline {
     agent any
-
+    environment {
+        AWS_REGION = "eu-west-2"
+        DOCKER_IMAGE = "sasank1219/springboot-hello:${BUILD_NUMBER}"
+        DOCKER_HUB_CREDS = "sasank-docker"
+        KUBE_NAMESPACE = "sasank"
+        HELM_RELEASE = "springboot-app"
+        HELM_CHART_PATH = "helm-chart"
+    }
     tools {
         maven 'maven3'
     }
-
-    triggers {
-        githubPush()
-    }
-
-    environment {
-        DOCKER_IMAGE = "sasank1219/springboot-hello:v${BUILD_NUMBER}"
-        DOCKER_CREDENTIALS_ID = "sasank-docker"
-        NAMESPACE = "sasank"
-        HELM_RELEASE_NAME = "springboot-hello"
-        HELM_CHART_PATH = "./helm-chart"
-    }
-
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                    credentialsId: 'git-sasank',
-                    url: 'https://github.com/nvssasank/Springboot_sasank.git'
+                git credentialsId: 'Github-token', url: 'https://github.com/nvssasank/Springboot_sasank.git', branch: 'main'
             }
         }
-
         stage('Build with Maven') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                sh 'mvn clean package'
             }
         }
-
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t $DOCKER_IMAGE -f Dockerfile ."
+                sh 'docker build -t $DOCKER_IMAGE .'
             }
         }
-
         stage('Push to Docker Hub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                    sh '''
-                        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-                        docker push $DOCKER_IMAGE
-                    '''
+                withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_CREDS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                    sh 'docker push $DOCKER_IMAGE'
                 }
             }
         }
-
         stage('Pull Docker Image') {
             steps {
                 sh '''
-                    echo "⬇️ Pulling Docker image to Minikube..."
+                    echo "⬇️ Pulling Docker image..."
                     docker pull $DOCKER_IMAGE
                 '''
             }
         }
-
-        stage('Deploy via Helm') {
+        stage('Deploy with Helm') {
             steps {
-                sh '''
-                    echo "🔧 Ensuring namespace '$NAMESPACE' exists..."
-                    kubectl get namespace $NAMESPACE || kubectl create namespace $NAMESPACE
-
-                    echo "🚀 Deploying Helm chart..."
-                    helm upgrade --install $HELM_RELEASE_NAME $HELM_CHART_PATH \
-                        --namespace $NAMESPACE \
-                        --set image.repository=${DOCKER_IMAGE%:*} \
-                        --set image.tag=${DOCKER_IMAGE##*:}
-                '''
+                sh """
+                    helm upgrade --install $HELM_RELEASE $HELM_CHART_PATH \
+                      --namespace $KUBE_NAMESPACE \
+                      --set image.repository=${DOCKER_IMAGE.split(':')[0]} \
+                      --set image.tag=${BUILD_NUMBER} \
+                      --create-namespace
+                """
             }
-        }
-
-        stage('Verify Deployment') {
-            steps {
-                sh '''
-                    echo "🔍 Checking Helm release status..."
-                    helm status $HELM_RELEASE_NAME --namespace $NAMESPACE
-                '''
-            }
-        }
-    }
-
-    post {
-        success {
-            echo "✅ Spring Boot app deployed successfully via Helm to Minikube namespace '$NAMESPACE'!"
-        }
-        failure {
-            echo "❌ Deployment failed. Please check the logs."
-        }
-        cleanup {
-            cleanWs()
         }
     }
 }
