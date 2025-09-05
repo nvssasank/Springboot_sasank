@@ -4,7 +4,7 @@ pipeline {
         AWS_REGION = "eu-west-2"
         EKS_CLUSTER = "batch4-Team3-cluster"
         DOCKER_IMAGE = "sasank1219/springboot-app-hello:${BUILD_NUMBER}"
-        DOCKER_HUB_CREDS = "docker-sasank"
+        DOCKER_HUB_CREDS = "sasank-docker"
         KUBE_NAMESPACE = "sasank-namespace"
     }
     tools {
