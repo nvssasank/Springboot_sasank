@@ -10,8 +10,6 @@ pipeline {
     }
 
     environment {
-        AWS_REGION = "eu-west-2"
-        EKS_CLUSTER = "batch4-Team3-cluster"
         DOCKER_IMAGE = "sasank1219/springboot-hello:v${BUILD_NUMBER}"
         DOCKER_CREDENTIALS_ID = "sasank-docker"
         NAMESPACE = "sasank"
@@ -51,17 +49,12 @@ pipeline {
             }
         }
 
-        stage('Configure AWS & Kubeconfig') {
+        stage('Configure Minikube') {
             steps {
-                // ✅ Updated stage using usernamePassword for AWS credentials
-                withCredentials([usernamePassword(credentialsId: 'aws-creds', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                    sh '''
-                        aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-                        aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-                        aws configure set default.region $AWS_REGION
-                        aws eks --region $AWS_REGION update-kubeconfig --name $EKS_CLUSTER
-                    '''
-                }
+                sh '''
+                    echo "🔧 Using Minikube context..."
+                    kubectl config use-context minikube
+                '''
             }
         }
 
@@ -85,9 +78,6 @@ pipeline {
                 sh '''
                     echo "🔍 Checking Helm release status..."
                     helm status $HELM_RELEASE_NAME --namespace $NAMESPACE
-
-                    echo "🔍 Ingress DNS:"
-                    kubectl get ingress springboot-app-ingress -n $NAMESPACE -o jsonpath="{.status.loadBalancer.ingress[0].hostname}"
                 '''
             }
         }
@@ -95,7 +85,7 @@ pipeline {
 
     post {
         success {
-            echo "✅ Spring Boot app deployed successfully via Helm to EKS namespace '$NAMESPACE'!"
+            echo "✅ Spring Boot app deployed successfully via Helm to Minikube namespace '$NAMESPACE'!"
         }
         failure {
             echo "❌ Deployment failed. Please check the logs."
