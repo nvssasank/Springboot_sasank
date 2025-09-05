@@ -14,8 +14,6 @@ pipeline {
         EKS_CLUSTER = "batch4-Team3-cluster"
         DOCKER_IMAGE = "sasank1219/springboot-hello:v${BUILD_NUMBER}"
         DOCKER_CREDENTIALS_ID = "sasank-docker"
-        AWS_ACCESS_KEY_ID_CRED = "aws-access-key-id"
-        AWS_SECRET_ACCESS_KEY_CRED = "aws-secret-access-key"
         NAMESPACE = "sasank"
         HELM_RELEASE_NAME = "springboot-hello"
         HELM_CHART_PATH = "./helm-chart"
@@ -55,10 +53,8 @@ pipeline {
 
         stage('Configure AWS & Kubeconfig') {
             steps {
-                withCredentials([
-                    string(credentialsId: AWS_ACCESS_KEY_ID_CRED, variable: 'AWS_ACCESS_KEY_ID'),
-                    string(credentialsId: AWS_SECRET_ACCESS_KEY_CRED, variable: 'AWS_SECRET_ACCESS_KEY')
-                ]) {
+                // ✅ Updated stage using usernamePassword for AWS credentials
+                withCredentials([usernamePassword(credentialsId: 'aws-creds', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                     sh '''
                         aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
                         aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
