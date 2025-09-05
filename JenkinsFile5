@@ -49,11 +49,11 @@ pipeline {
             }
         }
 
-        stage('Configure Minikube') {
+        stage('Pull Docker Image') {
             steps {
                 sh '''
-                    echo "🔧 Using Minikube context..."
-                    kubectl config use-context minikube
+                    echo "⬇️ Pulling Docker image to Minikube..."
+                    docker pull $DOCKER_IMAGE
                 '''
             }
         }
